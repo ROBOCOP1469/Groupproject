@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5; /* Light gray background */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #212529; /* Dark gray text */
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff; /* White background */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1, h2 {
+            color: #007bff; /* Bootstrap Blue */
+            text-align: center;
+        }
+
+        p {
+            text-align: center;
+            font-size: 16px;
+            color: #495057;
+        }
+
+        strong {
+            color: #007bff;
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+            background-color: #007bff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        a:hover {
+            background-color: #0056b3; /* Darker blue */
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background-color: #007bff;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:hover {
+            background-color: #e9ecef; /* Hover effect */
+        }
+
+        th {
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #dc3545; /* Red */
+        }
+
+        .btn-delete:hover {
+            background-color: #a71d2a; /* Darker red */
+        }
+
+        .btn-edit {
+            background-color: #007bff; /* Blue */
+        }
+
+        .btn-edit:hover {
+            background-color: #0056b3; /* Darker blue */
+        }
+
+        /* Form Styles */
+        form {
+            margin: 20px 0;
+        }
+
+        form h2 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        form input[type="text"], form input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        form button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Inventory Management</h1>
+        <p>Welcome, <strong><%= username %></strong>!</p>
+        <a href="/logout">Logout</a>
+
+        <!-- Add New Item Form -->
+        <form action="/inventory" method="POST">
+            <h2>Add New Item</h2>
+            <input type="text" name="name" placeholder="Item Name" required>
+            <input type="number" name="quantity" placeholder="Quantity" required>
+            <input type="number" name="price" placeholder="Price" required>
+            <input type="text" name="category" placeholder="Category">
+            <button type="submit">Add Item</button>
+        </form>
+
+        <!-- Inventory Table -->
+        <h2>Inventory Items</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Category</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% items.forEach(item => { %>
+                <tr>
+                    <td><%= item.name %></td>
+                    <td><%= item.quantity %></td>
+                    <td><%= item.price %></td>
+                    <td><%= item.category %></td>
+                    <td>
+                        <form action="/inventory/delete/<%= item._id %>" method="POST" style="display: inline;">
+                            <button class="btn btn-delete" type="submit">Delete</button>
+                        </form>
+                        <button class="btn btn-edit" onclick="openUpdateForm('<%= item._id %>', '<%= item.name %>', '<%= item.quantity %>', '<%= item.price %>', '<%= item.category %>')">Edit</button>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <!-- Update Item Form -->
+        <form id="update-form" action="" method="POST" style="display: none;">
+            <h2>Update Item</h2>
+            <input type="text" id="update-name" name="name" placeholder="Item Name" required>
+            <input type="number" id="update-quantity" name="quantity" placeholder="Quantity" required>
+            <input type="number" id="update-price" name="price" placeholder="Price" required>
+            <input type="text" id="update-category" name="category" placeholder="Category">
+            <button type="submit">Update Item</button>
+        </form>
+    </div>
+
+    <script>
+        // Open the update form and display the item's details
+        function openUpdateForm(id, name, quantity, price, category) {
+            const updateForm = document.getElementById('update-form');
+            updateForm.style.display = 'block';
+            updateForm.action = `/inventory/update/${id}`;
+            document.getElementById('update-name').value = name;
+            document.getElementById('update-quantity').value = quantity;
+            document.getElementById('update-price').value = price;
+            document.getElementById('update-category').value = category;
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    </script>
+</body>
+</html>
